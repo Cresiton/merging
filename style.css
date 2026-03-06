@@ -253,6 +253,29 @@ body {
   height: 100%;
   pointer-events: none;
 }
+.overlay-canvas.drawing { pointer-events: auto; cursor: crosshair; }
+
+.intrusion-alert {
+  position: absolute;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 10px 24px;
+  background: rgba(255, 75, 75, 0.95);
+  color: #fff;
+  font-family: var(--font-data);
+  font-size: 0.9rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  border: 2px solid var(--red);
+  box-shadow: 0 0 20px var(--red);
+  z-index: 5;
+  display: none;
+  pointer-events: none;
+  animation: blink 0.8s infinite;
+}
+.intrusion-alert.visible { display: block; }
 
 #main-video,
 #overlay-canvas {
@@ -298,6 +321,7 @@ body {
   position: absolute; top: 16px; left: 16px; right: 16px;
   display: flex; justify-content: space-between; z-index: 10;
 }
+.feed-controls { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
 .flat-cyber-btn {
   background: rgba(0, 240, 255, 0.1); border: 1px solid var(--cyan);
   color: var(--cyan); font-family: var(--font-data); font-size: 0.8rem;
@@ -311,6 +335,9 @@ body {
 .btn-danger:hover { background: rgba(255, 75, 75, 0.3); box-shadow: 0 0 10px var(--red); }
 .btn-secondary { border-color: var(--yellow); color: var(--yellow); text-shadow: 0 0 5px var(--yellow); background: rgba(255, 215, 0, 0.1); }
 .btn-secondary:hover { background: rgba(255, 215, 0, 0.3); box-shadow: 0 0 10px var(--yellow); }
+.btn-boundary { border-color: var(--green); color: var(--green); text-shadow: 0 0 5px var(--green); background: rgba(0, 230, 118, 0.1); }
+.btn-boundary:hover { background: rgba(0, 230, 118, 0.3); box-shadow: 0 0 10px var(--green); }
+.btn-boundary.active { background: rgba(0, 230, 118, 0.25); box-shadow: 0 0 12px var(--green); }
 .rec-indicator {
   background: rgba(0,0,0,0.6); padding: 4px 10px;
   color: var(--red); font-family: var(--font-data); border: 1px solid var(--red-mid);
