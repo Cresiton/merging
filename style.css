@@ -254,6 +254,11 @@ body {
   pointer-events: none;
 }
 
+#main-video,
+#overlay-canvas {
+  transform: scaleX(-1);
+}
+
 /* Bounding Boxes */
 .bounding-box {
   position: absolute;

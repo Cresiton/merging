@@ -106,16 +106,28 @@ function drawDetections(boxes) {
         // Label
         const label = `${box.label || 'OBJ'} ${Math.round((box.conf || 0) * 100)}%`;
         const paddingX = 4;
-        const paddingY = 3;
         const textWidth = overlayCtx.measureText(label).width;
 
         const labelX = x1;
         const labelY = Math.max(0, y1 - 16);
 
+        const rectX = labelX - paddingX;
+        const rectWidth = textWidth + paddingX * 2;
+        const centerX = rectX + rectWidth / 2;
+
+        // Draw label background and text with an additional horizontal flip
+        // around its center to counteract the CSS mirror on the canvas.
+        overlayCtx.save();
+        overlayCtx.translate(centerX, 0);
+        overlayCtx.scale(-1, 1);
+        overlayCtx.translate(-centerX, 0);
+
         overlayCtx.fillStyle = 'rgba(0, 240, 255, 0.9)';
-        overlayCtx.fillRect(labelX - paddingX, labelY - 10, textWidth + paddingX * 2, 14);
+        overlayCtx.fillRect(rectX, labelY - 10, rectWidth, 14);
         overlayCtx.fillStyle = '#000';
         overlayCtx.fillText(label, labelX, labelY);
+
+        overlayCtx.restore();
     });
 }
 
@@ -211,8 +223,11 @@ videoUpload.addEventListener('change', (e) => {
         stopMedia();
         const fileURL = URL.createObjectURL(file);
         mainVideo.src = fileURL;
+        mainVideo.loop = true;
         mainVideo.style.display = 'block';
         videoContainer.style.backgroundImage = 'none';
         mainVideo.play();
+        resizeOverlayToVideo();
+        startDetection();
     }
 });
