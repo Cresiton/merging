@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Perimeter Security System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="crt-overlay"></div>
+    <div class="app-container">
+        
+        <!-- 1. Top Header Bar -->
+        <header class="header panel">
+            <div class="header-left section-glass">
+                <span class="small-text cyan">AI Model Status</span>
+                <span class="status-dot green"></span>
+                <span class="small-text green tracking-wide">RUNNING // OPTIMAL</span>
+                <div class="cyan-bracket">[Live Surveillance]</div>
+            </div>
+            
+            <div class="header-center">
+                <h1 class="glow-text title-glitch" data-text="AI-BASED PERIMETER SECURITY SYSTEM">AI-BASED PERIMETER SECURITY SYSTEM</h1>
+            </div>
+            
+            <div class="header-right section-glass">
+                <div class="camera-status">
+                    <span class="small-text cyan">Camera Status:</span>
+                    <span class="small-text green">RUNNING/OPTIMAL</span>
+                </div>
+                <button class="bracket-btn">[Event Logs]</button>
+                <button class="bracket-btn">[System Status]</button>
+            </div>
+        </header>
+
+        <!-- 6. Left Navigation Sidebar -->
+        <nav class="sidebar panel section-glass">
+            <div class="nav-icons top-icons">
+                <button class="icon-btn active"><i data-lucide="layout-grid"></i></button>
+                <button class="icon-btn"><i data-lucide="user"></i></button>
+                <button class="icon-btn"><i data-lucide="settings"></i></button>
+                <button class="icon-btn"><i data-lucide="bar-chart-2"></i></button>
+                <button class="icon-btn"><i data-lucide="tool"></i></button>
+                <button class="icon-btn"><i data-lucide="database"></i></button>
+            </div>
+            <div class="nav-icons bottom-icons">
+                <button class="icon-btn logout-btn"><i data-lucide="log-out"></i></button>
+            </div>
+        </nav>
+
+        <!-- 2. Central Live Feed (Zone A) -->
+        <main class="main-feed panel feed-glass">
+            <div class="video-container" id="video-container">
+                <video id="main-video" autoplay loop muted playsinline style="width: 100%; height: 100%; object-fit: cover; display: none;"></video>
+                <div class="video-overlay crt-subtle"></div>
+                <!-- Bounding Boxes -->
+                <div class="bounding-box red-box" style="top: 35%; left: 45%; width: 120px; height: 280px;">
+                    <span class="box-label tag-red">BOUNDARY APPROACH</span>
+                    <div class="corner tl"></div><div class="corner tr"></div>
+                    <div class="corner bl"></div><div class="corner br"></div>
+                </div>
+                <div class="bounding-box cyan-box" style="top: 50%; left: 20%; width: 50px; height: 110px;">
+                    <span class="box-label tag-cyan">HUMAN | CONF. 91%</span>
+                    <div class="corner tl"></div><div class="corner tr"></div>
+                    <div class="corner bl"></div><div class="corner br"></div>
+                </div>
+                <div class="bounding-box cyan-box" style="top: 52%; left: 70%; width: 45px; height: 100px;">
+                    <span class="box-label tag-cyan">HUMAN | CONF. 94%</span>
+                    <div class="corner tl"></div><div class="corner tr"></div>
+                    <div class="corner bl"></div><div class="corner br"></div>
+                </div>
+                <div class="bounding-box cyan-box" style="top: 48%; left: 82%; width: 40px; height: 95px;">
+                    <span class="box-label tag-cyan">HUMAN | CONF. 90%</span>
+                    <div class="corner tl"></div><div class="corner tr"></div>
+                    <div class="corner bl"></div><div class="corner br"></div>
+                </div>
+            </div>
+
+            <div class="feed-header">
+                <div class="feed-controls">
+                    <button class="flat-cyber-btn btn-primary" id="btn-webcam-on">[TURN ON WEBCAM]</button>
+                    <button class="flat-cyber-btn btn-danger" id="btn-webcam-off">[STOP WEBCAM]</button>
+                    <button class="flat-cyber-btn btn-secondary" id="btn-sample-video">[USE SAMPLE VIDEO]</button>
+                    <input type="file" id="video-upload" accept="video/*" style="display: none;">
+                </div>
+                <div class="rec-indicator blink">
+                    <span class="red-dot"></span> REC
+                </div>
+            </div>
+
+            <div class="feed-footer">
+                <div class="timeline-marker">
+                    <div class="timeline-bar">
+                        <div class="timeline-progress blink-fast"></div>
+                    </div>
+                    <span class="timeline-label">PERIMETER BOUNDARY</span>
+                </div>
+                <div class="feed-stats">
+                    <span class="stat-group cyan">[<span class="red">● REC</span>] [<span class="green">▶ PLAY</span>]</span>
+                    <span class="digital-clock" id="clock">14:02:45</span>
+                    <span class="stat-group cyan text-end">FPS: 30<br>STATUS: <span class="green">ONLINE</span></span>
+                </div>
+            </div>
+        </main>
+
+        <!-- Right Side Container (Telemetry + Risk) -->
+        <aside class="right-panel">
+            <!-- 4. Intrusion Risk Score -->
+            <div class="risk-score-panel panel red-glass pulse-border-red">
+                <h2 class="panel-title">Intrusion Risk Score</h2>
+                <div class="risk-ring-container">
+                    <div class="risk-ring">
+                        <svg viewBox="0 0 100 100">
+                            <circle class="ring-bg" cx="50" cy="50" r="45"></circle>
+                            <circle class="ring-fg" cx="50" cy="50" r="45"></circle>
+                        </svg>
+                        <div class="ring-data">
+                            <div class="risk-value">95%</div>
+                            <div class="risk-label">High</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. Telemetry Stack -->
+            <div class="telemetry-stack">
+                <!-- Panel 1: Camera Quality -->
+                <div class="panel telemetry-panel cyan-glass">
+                    <div class="gauge-container">
+                        <svg class="half-gauge" viewBox="0 0 100 50">
+                            <path class="gauge-bg" d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke-width="8"></path>
+                            <path class="gauge-fg" d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke-width="8" stroke-dasharray="125" stroke-dashoffset="18"></path>
+                        </svg>
+                        <div class="gauge-value">
+                            <span>85</span><span class="small-pct">%</span>
+                        </div>
+                    </div>
+                    <div class="telemetry-title text-center">CAMERA QUALITY LEVEL</div>
+                    <div class="notification-box mt-2">
+                        <div class="notif-title cyan font-bold">GOOD VISIBILITY</div>
+                        <div class="notif-subtext">Camera visibility reduced - activating backup sensors.</div>
+                    </div>
+                </div>
+
+                <!-- Panel 2: Sensor Status -->
+                <div class="panel telemetry-panel list-panel border-bottom-green">
+                    <h3 class="panel-subtitle italic">Sensor Status</h3>
+                    <ul class="data-list">
+                        <li><span>Motion Sensor:</span> <span class="green bold">[ACTIVE-GREEN]</span></li>
+                        <li><span>Vibration Sensor:</span> <span class="yellow bold">[MONITORING-YELLOW]</span></li>
+                        <li><span>Sound Sensor:</span> <span class="green bold">[ACTIVE-GREEN]</span></li>
+                    </ul>
+                </div>
+
+                <!-- Panel 3: Detection Stats -->
+                <div class="panel telemetry-panel list-panel border-bottom-cyan">
+                    <h3 class="panel-subtitle italic">Detection Statistics</h3>
+                    <ul class="data-list">
+                        <li><span>Daily Events:</span> <span class="cyan glow-text-small">312</span></li>
+                        <li><span>False Positives:</span> <span class="cyan glow-text-small">3%</span></li>
+                        <li><span>Alarms:</span> <span class="red glow-text-small blink">45</span></li>
+                    </ul>
+                </div>
+            </div>
+        </aside>
+
+        <!-- 5. Bottom Event Timeline -->
+        <footer class="bottom-timeline">
+            <div class="timeline-track">
+                <div class="event-panel alert-panel">
+                    <div class="event-time">14:02:42</div>
+                    <div class="event-desc red bold">HUMAN DETECTED <span class="event-zone">(ZONE A-4)</span></div>
+                    <div class="event-icon"><i data-lucide="alert-triangle" class="red"></i></div>
+                </div>
+                <div class="event-panel warning-panel">
+                    <div class="event-time">14:02:30</div>
+                    <div class="event-desc yellow bold">BOUNDARY CROSSING <span class="event-zone">(ZONE B)</span></div>
+                    <div class="event-icon"><i data-lucide="activity" class="yellow"></i></div>
+                </div>
+                <div class="event-panel">
+                    <div class="event-time">14:02:15</div>
+                    <div class="event-desc cyan bold">SUSPICIOUS LOITERING <span class="event-zone">(ZONE A-2)</span></div>
+                    <div class="event-icon"><i data-lucide="eye" class="cyan"></i></div>
+                </div>
+                <div class="event-panel">
+                    <div class="event-time">14:01:50</div>
+                    <div class="event-desc cyan bold">SENSOR ALERT: MOTION <span class="event-zone">(ZONE A)</span></div>
+                    <div class="event-icon"><i data-lucide="radio" class="cyan"></i></div>
+                </div>
+            </div>
+        </footer>
+
+    </div>
+
+    <!-- Scripts -->
+    <script src="script.js"></script>
+</body>
+</html>
