@@ -260,20 +260,18 @@ body {
   bottom: 16px;
   left: 50%;
   transform: translateX(-50%);
-  padding: 10px 24px;
-  background: rgba(255, 75, 75, 0.95);
+  padding: 12px 28px;
+  background: #dc3545;
   color: #fff;
   font-family: var(--font-data);
-  font-size: 0.9rem;
+  font-size: 1rem;
   font-weight: bold;
-  text-transform: uppercase;
   letter-spacing: 2px;
-  border: 2px solid var(--red);
-  box-shadow: 0 0 20px var(--red);
-  z-index: 5;
+  border: 2px solid #ff4b4b;
+  box-shadow: 0 0 20px rgba(255, 75, 75, 0.6);
+  z-index: 10;
   display: none;
   pointer-events: none;
-  animation: blink 0.8s infinite;
 }
 .intrusion-alert.visible { display: block; }
 
@@ -324,18 +322,18 @@ body {
 .feed-controls { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
 .flat-cyber-btn {
   background: rgba(0, 240, 255, 0.1); border: 1px solid var(--cyan);
-  color: var(--cyan); font-family: var(--font-data); font-size: 0.8rem;
+  color: #000; font-family: var(--font-data); font-size: 0.8rem;
   padding: 6px 12px; margin-right: 8px; cursor: pointer; transition: 0.2s;
-  font-weight: bold; text-shadow: 0 0 5px var(--cyan);
+  font-weight: bold; text-shadow: none;
 }
 .flat-cyber-btn:hover { background: rgba(0, 240, 255, 0.3); box-shadow: 0 0 10px var(--cyan); transform: translateY(-1px); }
 
-.btn-primary { border-color: var(--cyan); color: var(--cyan); }
-.btn-danger { border-color: var(--red); color: var(--red); text-shadow: 0 0 5px var(--red); background: rgba(255, 75, 75, 0.1); }
+.btn-primary { border-color: var(--cyan); color: #000; }
+.btn-danger { border-color: var(--red); color: #000; text-shadow: none; background: rgba(255, 75, 75, 0.1); }
 .btn-danger:hover { background: rgba(255, 75, 75, 0.3); box-shadow: 0 0 10px var(--red); }
-.btn-secondary { border-color: var(--yellow); color: var(--yellow); text-shadow: 0 0 5px var(--yellow); background: rgba(255, 215, 0, 0.1); }
+.btn-secondary { border-color: var(--yellow); color: #000; text-shadow: none; background: rgba(255, 215, 0, 0.1); }
 .btn-secondary:hover { background: rgba(255, 215, 0, 0.3); box-shadow: 0 0 10px var(--yellow); }
-.btn-boundary { border-color: var(--green); color: var(--green); text-shadow: 0 0 5px var(--green); background: rgba(0, 230, 118, 0.1); }
+.btn-boundary { border-color: var(--green); color: #000; text-shadow: none; background: rgba(0, 230, 118, 0.1); }
 .btn-boundary:hover { background: rgba(0, 230, 118, 0.3); box-shadow: 0 0 10px var(--green); }
 .btn-boundary.active { background: rgba(0, 230, 118, 0.25); box-shadow: 0 0 12px var(--green); }
 .rec-indicator {

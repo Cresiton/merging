@@ -53,25 +53,24 @@ def index():
 
 
 def _resolve_audio_path() -> str:
-    """Resolve path to alarm audio file (searches project folder structure)."""
-    for p in ["audio.mpeg", "audio.mp3"]:
+    """Resolve path to alarm audio file (searches for 'audio', audio.mpeg, audio.mp3)."""
+    candidates = ["audio", "audio.mpeg", "audio.mp3"]
+    for p in candidates:
         if os.path.isfile(p):
             return p
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    for p in [
-        os.path.join(script_dir, "audio.mpeg"),
-        os.path.join(script_dir, "audio.mp3"),
-        os.path.join(os.path.dirname(script_dir), "audio.mpeg"),
-        os.path.join(os.path.dirname(script_dir), "audio.mp3"),
-    ]:
-        if os.path.isfile(p):
-            return p
+    parent_dir = os.path.dirname(script_dir)
+    for name in candidates:
+        for base in [script_dir, parent_dir]:
+            p = os.path.join(base, name)
+            if os.path.isfile(p):
+                return p
     return ""
 
 
 @app.route("/audio/alert")
 def serve_alert_audio():
-    """Serve alarm audio for breach alerts in the web app."""
+    """Serve alarm audio for breach alerts in the web app. Uses file named 'audio', audio.mpeg, or audio.mp3."""
     path = _resolve_audio_path()
     if not path:
         return "", 404
@@ -127,10 +126,14 @@ def _run_web_detection(
     state["frame_idx"] += 1
     frame_idx = state["frame_idx"]
 
+    # Fast path when boundary is set: skip pose/face, use smaller image for quicker breach detection
+    boundary_active = boundary and len(boundary) >= 2 and restricted_side in (0, 1)
+    imgsz = 256 if boundary_active else 320
+
     # YOLO person detection
     results = model.predict(
         source=img,
-        imgsz=320,
+        imgsz=imgsz,
         conf=0.5,
         classes=[0],
         device="cpu",
@@ -151,13 +154,14 @@ def _run_web_detection(
     track_ids: List[int] = []
     used_prev = set()
 
+    iou_thresh = 0.2 if boundary_active else 0.3  # Lower when boundary set to keep track across crossing
     for bbox in boxes_xyxy:
         best_iou, best_idx = 0.0, -1
         for i, prev in enumerate(prev_boxes):
             if i in used_prev:
                 continue
             iou = _iou_xyxy(bbox, prev)
-            if iou > best_iou and iou > 0.3:
+            if iou > best_iou and iou > iou_thresh:
                 best_iou, best_idx = iou, i
         if best_idx >= 0:
             track_ids.append(prev_ids[best_idx])
@@ -170,34 +174,34 @@ def _run_web_detection(
     state["last_boxes"] = boxes_xyxy
     state["track_ids"] = track_ids
 
-    # Lazy-load pose and face
+    # When boundary is active, skip pose and face to minimize latency for breach alarm
     pose_obj = None
-    try:
-        import mediapipe.solutions.pose as mp_pose  # type: ignore[import-not-found]
-        pose_obj = mp_pose.Pose(
-            static_image_mode=False,
-            model_complexity=0,
-            smooth_landmarks=True,
-            min_detection_confidence=0.5,
-            min_tracking_confidence=0.5,
-        )
-    except Exception:
-        pass
-
     auth_embeddings: List[np.ndarray] = []
-    try:
-        from deepface import DeepFace
-        for p in _get_authorized_paths():
-            try:
-                faces = DeepFace.extract_faces(img_path=p, enforce_detection=True, detector_backend="opencv", align=True)
-                if faces:
-                    emb = _embed_aligned_face(DeepFace, faces[0].get("face"), model_name="Facenet")
-                    if emb is not None:
-                        auth_embeddings.append(emb)
-            except Exception:
-                pass
-    except Exception:
-        pass
+    if not boundary_active:
+        try:
+            import mediapipe.solutions.pose as mp_pose  # type: ignore[import-not-found]
+            pose_obj = mp_pose.Pose(
+                static_image_mode=False,
+                model_complexity=0,
+                smooth_landmarks=True,
+                min_detection_confidence=0.5,
+                min_tracking_confidence=0.5,
+            )
+        except Exception:
+            pass
+        try:
+            from deepface import DeepFace
+            for p in _get_authorized_paths():
+                try:
+                    faces = DeepFace.extract_faces(img_path=p, enforce_detection=True, detector_backend="opencv", align=True)
+                    if faces:
+                        emb = _embed_aligned_face(DeepFace, faces[0].get("face"), model_name="Facenet")
+                        if emb is not None:
+                            auth_embeddings.append(emb)
+                except Exception:
+                    pass
+        except Exception:
+            pass
 
     detections: List[dict] = []
     breaches: List[dict] = []
@@ -266,8 +270,8 @@ def _run_web_detection(
             in_restricted_zone = side == restricted_side
             prev_side = state["person_area"].get(track_id, side)
             state["person_area"][track_id] = side
-            # Breach: person moved from unrestricted → restricted (same ID)
-            if prev_side != restricted_side and side == restricted_side:
+            # Breach: person moved from restricted (green) → unrestricted (red) (same ID)
+            if prev_side == restricted_side and side != restricted_side:
                 is_breach = True
                 breaches.append({"track_id": track_id})
 

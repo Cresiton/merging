@@ -155,7 +155,6 @@ function drawDetections(boxes) {
     drawBoundary();
 
     if (!boxes || !boxes.length) {
-        if (hasIntrusion) intrusionAlert.classList.remove('visible');
         hasIntrusion = false;
         return;
     }
@@ -233,8 +232,6 @@ function drawDetections(boxes) {
 
         overlayCtx.restore();
     });
-    if (hasIntrusion) intrusionAlert.classList.add('visible');
-    else intrusionAlert.classList.remove('visible');
 }
 
 function playBreachAlarm() {
@@ -259,7 +256,8 @@ async function detectionLoop() {
             captureCanvas.height = vh;
             captureCtx.drawImage(mainVideo, 0, 0, vw, vh);
 
-            const dataUrl = captureCanvas.toDataURL('image/jpeg', 0.6);
+            const jpegQuality = boundaryPoints.length >= 2 ? 0.5 : 0.6;
+            const dataUrl = captureCanvas.toDataURL('image/jpeg', jpegQuality);
 
             const payload = {
                 image: dataUrl,
@@ -284,6 +282,10 @@ async function detectionLoop() {
                 drawDetections(data.boxes || []);
                 if (data.breaches && data.breaches.length > 0) {
                     playBreachAlarm();
+                    intrusionAlert.textContent = 'Intruder Detected';
+                    intrusionAlert.classList.add('visible');
+                    clearTimeout(window._intrusionAlertHide);
+                    window._intrusionAlertHide = setTimeout(() => intrusionAlert.classList.remove('visible'), 5000);
                 }
             } else {
                 const errText = await response.text();
@@ -295,7 +297,9 @@ async function detectionLoop() {
     }
 
     if (detectionRunning) {
-        setTimeout(detectionLoop, 250); // ~4 detections per second
+        // Faster polling when boundary is set for quicker breach alarm (~10–12 FPS)
+        const intervalMs = boundaryPoints.length >= 2 ? 80 : 120;
+        setTimeout(detectionLoop, intervalMs);
     }
 }
 
@@ -398,6 +402,7 @@ btnBoundaryClear.addEventListener('click', () => {
     btnBoundaryStart.classList.remove('active');
     btnBoundaryFinish.classList.remove('active');
     intrusionAlert.classList.remove('visible');
+    if (window._intrusionAlertHide) clearTimeout(window._intrusionAlertHide);
     hasIntrusion = false;
     clearDetections();
     drawBoundary();
