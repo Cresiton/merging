@@ -1,6 +1,12 @@
 // Initialize Lucide Icons
 lucide.createIcons();
 
+// Default: Restricted = Right side of line
+document.addEventListener('DOMContentLoaded', () => {
+    const br = document.getElementById('btn-restricted-right');
+    if (br) br.classList.add('active');
+});
+
 // Live clock update
 function updateClock() {
     const clockElement = document.getElementById('clock');
@@ -55,6 +61,8 @@ const intrusionAlert = document.getElementById('intrusion-alert');
 const btnBoundaryStart = document.getElementById('btn-boundary-start');
 const btnBoundaryFinish = document.getElementById('btn-boundary-finish');
 const btnBoundaryClear = document.getElementById('btn-boundary-clear');
+const btnRestrictedLeft = document.getElementById('btn-restricted-left');
+const btnRestrictedRight = document.getElementById('btn-restricted-right');
 
 // Off-screen canvas used to grab frames to send to the backend
 const captureCanvas = document.createElement('canvas');
@@ -65,12 +73,18 @@ let detectionRunning = false;
 let boundaryPoints = [];  // normalized {x, y} 0-1
 let isDrawingBoundary = false;
 let hasIntrusion = false;
+let restrictedSide = 1;  // 1 = right of line (px > boundaryX), 0 = left
+const sessionId = 'sess-' + Math.random().toString(36).slice(2) + Date.now();
+let alarmAudio = null;
 
 function resizeOverlayToVideo() {
     const rect = videoContainer.getBoundingClientRect();
     if (!rect.width || !rect.height) return;
-    overlayCanvas.width = rect.width;
-    overlayCanvas.height = rect.height;
+    const w = Math.floor(rect.width);
+    const h = Math.floor(rect.height);
+    if (w === overlayCanvas.width && h === overlayCanvas.height) return;
+    overlayCanvas.width = w;
+    overlayCanvas.height = h;
 }
 
 window.addEventListener('resize', resizeOverlayToVideo);
@@ -145,6 +159,10 @@ function drawDetections(boxes) {
         hasIntrusion = false;
         return;
     }
+    if (overlayCanvas.width === 0 || overlayCanvas.height === 0) {
+        resizeOverlayToVideo();
+        if (overlayCanvas.width === 0 || overlayCanvas.height === 0) return;
+    }
     const width = overlayCanvas.width;
     const height = overlayCanvas.height;
 
@@ -159,22 +177,40 @@ function drawDetections(boxes) {
         const y2 = box.y2 * height;
         const cx = (box.x1 + box.x2) / 2;
         const cy = (box.y1 + box.y2) / 2;
-        const inRestricted = boundaryPoints.length >= 2 && isInRestrictedZone(cx, cy);
+        const inRestricted = boundaryPoints.length >= 2
+            ? (box.in_restricted_zone !== undefined ? box.in_restricted_zone : isInRestrictedZone(cx, cy))
+            : false;
         if (inRestricted) hasIntrusion = true;
 
         const w = x2 - x1;
         const h = y2 - y1;
 
-        overlayCtx.strokeStyle = inRestricted ? 'rgba(255, 75, 75, 0.95)' : 'rgba(0, 240, 255, 0.9)';
-        overlayCtx.fillStyle = inRestricted ? 'rgba(255, 75, 75, 0.2)' : 'rgba(0, 240, 255, 0.15)';
+        const isBreach = box.breach === true;
+        const isAuth = box.authorized === true;
+        const isUnauth = box.authorized === false;
+        const status = box.status || 'Person';
+
+        // Restricted area = green, Unrestricted area = red (when boundary is set)
+        let strokeColor = 'rgba(0, 240, 255, 0.9)';
+        if (boundaryPoints.length >= 2) {
+            strokeColor = inRestricted ? 'rgba(0, 255, 100, 0.95)' : 'rgba(255, 75, 75, 0.95)';
+        }
+        if (isBreach) strokeColor = 'rgba(255, 75, 75, 0.95)';
+        else if (isUnauth) strokeColor = 'rgba(255, 75, 75, 0.95)';
+        else if (isAuth && boundaryPoints.length < 2) strokeColor = 'rgba(0, 255, 100, 0.95)';
+
+        overlayCtx.strokeStyle = strokeColor;
+        overlayCtx.fillStyle = strokeColor.replace('0.95)', '0.2)').replace('0.9)', '0.15)');
 
         overlayCtx.beginPath();
         overlayCtx.rect(x1, y1, w, h);
         overlayCtx.stroke();
         overlayCtx.fill();
 
-        // Label
-        const label = `${box.label || 'OBJ'} ${Math.round((box.conf || 0) * 100)}%`;
+        // Label: Person | BREACH! / AUTHORIZED / UNAUTHORIZED / Walking / Standing
+        let label = box.label || 'Person';
+        if (box.status && box.label === 'Person') label = `Person | ${status}`;
+        else if (box.label !== 'Person') label = `Person | ${box.label}`;
         const paddingX = 4;
         const textWidth = overlayCtx.measureText(label).width;
 
@@ -185,14 +221,12 @@ function drawDetections(boxes) {
         const rectWidth = textWidth + paddingX * 2;
         const centerX = rectX + rectWidth / 2;
 
-        // Draw label background and text with an additional horizontal flip
-        // around its center to counteract the CSS mirror on the canvas.
         overlayCtx.save();
         overlayCtx.translate(centerX, 0);
         overlayCtx.scale(-1, 1);
         overlayCtx.translate(-centerX, 0);
 
-        overlayCtx.fillStyle = inRestricted ? 'rgba(255, 75, 75, 0.95)' : 'rgba(0, 240, 255, 0.9)';
+        overlayCtx.fillStyle = strokeColor;
         overlayCtx.fillRect(rectX, labelY - 10, rectWidth, 14);
         overlayCtx.fillStyle = '#000';
         overlayCtx.fillText(label, labelX, labelY);
@@ -201,6 +235,16 @@ function drawDetections(boxes) {
     });
     if (hasIntrusion) intrusionAlert.classList.add('visible');
     else intrusionAlert.classList.remove('visible');
+}
+
+function playBreachAlarm() {
+    try {
+        if (!alarmAudio) {
+            alarmAudio = new Audio('/audio/alert');
+        }
+        alarmAudio.currentTime = 0;
+        alarmAudio.play().catch(() => {});
+    } catch (e) {}
 }
 
 async function detectionLoop() {
@@ -217,17 +261,33 @@ async function detectionLoop() {
 
             const dataUrl = captureCanvas.toDataURL('image/jpeg', 0.6);
 
-            const response = await fetch('http://127.0.0.1:5000/detect', {
+            const payload = {
+                image: dataUrl,
+                session_id: sessionId
+            };
+            if (boundaryPoints.length >= 2) {
+                payload.boundary = boundaryPoints.slice(0, 2).map(p => [p.x, p.y]);
+                payload.restricted_side = restrictedSide;
+            }
+
+            const response = await fetch('/detect', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ image: dataUrl })
+                body: JSON.stringify(payload)
             });
 
             if (response.ok) {
                 const data = await response.json();
+                resizeOverlayToVideo();
                 drawDetections(data.boxes || []);
+                if (data.breaches && data.breaches.length > 0) {
+                    playBreachAlarm();
+                }
+            } else {
+                const errText = await response.text();
+                console.error('Detect API error:', response.status, errText);
             }
         }
     } catch (err) {
@@ -273,6 +333,11 @@ btnWebcamOn.addEventListener('click', async () => {
         videoContainer.style.backgroundImage = 'none';
         mainVideo.play();
         resizeOverlayToVideo();
+        mainVideo.addEventListener('loadedmetadata', function onMeta() {
+            mainVideo.removeEventListener('loadedmetadata', onMeta);
+            resizeOverlayToVideo();
+            setTimeout(resizeOverlayToVideo, 100);
+        }, { once: true });
         startDetection();
     } catch (err) {
         console.error("Error accessing webcam:", err);
@@ -336,6 +401,17 @@ btnBoundaryClear.addEventListener('click', () => {
     hasIntrusion = false;
     clearDetections();
     drawBoundary();
+});
+
+btnRestrictedLeft.addEventListener('click', () => {
+    restrictedSide = 0;
+    btnRestrictedLeft.classList.add('active');
+    if (btnRestrictedRight) btnRestrictedRight.classList.remove('active');
+});
+btnRestrictedRight.addEventListener('click', () => {
+    restrictedSide = 1;
+    btnRestrictedRight.classList.add('active');
+    if (btnRestrictedLeft) btnRestrictedLeft.classList.remove('active');
 });
 
 overlayCanvas.addEventListener('click', (e) => {
