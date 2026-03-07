@@ -12,6 +12,7 @@ import base64
 import os
 from collections import defaultdict, deque
 from dataclasses import dataclass
+from datetime import datetime
 from typing import Deque, Dict, List, Optional, Set, Tuple
 
 import cv2
@@ -76,6 +77,56 @@ def serve_alert_audio():
         return "", 404
     from flask import send_file
     return send_file(path, mimetype="audio/mpeg", as_attachment=False)
+
+
+@app.route("/save_clip", methods=["POST"])
+def save_clip():
+    """
+    Save a single frame (image) from the web client when an alarm is triggered.
+    Expects JSON: { "image": "<data-url-or-base64>", "session_id": "...", "timestamp": "<iso8601>" }
+    Saves JPEG files under ./saved_clips and returns the relative URL.
+    """
+    payload = request.get_json(silent=True) or {}
+    image_b64 = payload.get("image")
+    if not image_b64:
+        return make_response(jsonify({"error": "Missing 'image' field"}), 400)
+
+    img = decode_image_from_base64(image_b64)
+    if img is None:
+        return make_response(jsonify({"error": "Unable to decode image"}), 400)
+
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    clips_dir = os.path.join(script_dir, "saved_clips")
+    os.makedirs(clips_dir, exist_ok=True)
+
+    ts = payload.get("timestamp") or datetime.utcnow().strftime("%Y-%m-%d_%H-%M-%S")
+    safe_ts = "".join(c for c in ts if c.isalnum() or c in ("-", "_"))
+    filename = f"{safe_ts}.jpg"
+    path = os.path.join(clips_dir, filename)
+
+    try:
+        cv2.imwrite(path, img)
+    except Exception:
+        return make_response(jsonify({"error": "Failed to write image"}), 500)
+
+    url = f"/saved_clips/{filename}"
+    return make_response(jsonify({"url": url}), 200)
+
+
+@app.route("/saved_clips", methods=["GET"])
+def list_saved_clips():
+    """
+    List saved clip image URLs for the Saved Clips dashboard.
+    Returns: { "clips": ["/saved_clips/clip_....jpg", ...] }
+    """
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    clips_dir = os.path.join(script_dir, "saved_clips")
+    clips: List[str] = []
+    if os.path.isdir(clips_dir):
+        for name in sorted(os.listdir(clips_dir), reverse=True):
+            if name.lower().endswith((".jpg", ".jpeg", ".png")):
+                clips.append(f"/saved_clips/{name}")
+    return make_response(jsonify({"clips": clips}), 200)
 
 
 # Load model once at startup

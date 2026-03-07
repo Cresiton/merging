@@ -1,10 +1,15 @@
 // Initialize Lucide Icons
 lucide.createIcons();
 
-// Default: Restricted = Right side of line
+// Default: Restricted = Right side of line, and load saved clips on Saved Clips page
 document.addEventListener('DOMContentLoaded', () => {
     const br = document.getElementById('btn-restricted-right');
     if (br) br.classList.add('active');
+
+    const savedClipsGrid = document.getElementById('saved-clips-grid');
+    if (savedClipsGrid) {
+        loadSavedClips(savedClipsGrid);
+    }
 });
 
 // Live clock update
@@ -244,6 +249,57 @@ function playBreachAlarm() {
     } catch (e) {}
 }
 
+async function saveBreachFrame(imageDataUrl) {
+    try {
+        await fetch('/save_clip', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                image: imageDataUrl,
+                session_id: sessionId,
+            }),
+        });
+    } catch (e) {
+        console.error('Error saving breach frame:', e);
+    }
+}
+
+async function loadSavedClips(gridEl) {
+    try {
+        const resp = await fetch('/saved_clips');
+        if (!resp.ok) {
+            gridEl.innerHTML = '<div class="small-text cyan">Unable to load saved clips.</div>';
+            return;
+        }
+        const data = await resp.json();
+        const clips = data.clips || [];
+        if (!clips.length) {
+            gridEl.innerHTML = '<div class="small-text cyan">No saved clips yet.</div>';
+            return;
+        }
+        gridEl.innerHTML = '';
+        clips.forEach((url) => {
+            const item = document.createElement('div');
+            item.className = 'saved-clip-item';
+            const img = document.createElement('img');
+            img.src = url;
+            img.className = 'saved-clip-thumb';
+            img.alt = 'Saved clip';
+            const meta = document.createElement('div');
+            meta.className = 'saved-clip-meta';
+            meta.textContent = url.split('/').pop();
+            item.appendChild(img);
+            item.appendChild(meta);
+            gridEl.appendChild(item);
+        });
+    } catch (e) {
+        console.error('Error loading saved clips:', e);
+        gridEl.innerHTML = '<div class="small-text cyan">Error loading saved clips.</div>';
+    }
+}
+
 async function detectionLoop() {
     if (!detectionRunning) return;
 
@@ -282,6 +338,7 @@ async function detectionLoop() {
                 drawDetections(data.boxes || []);
                 if (data.breaches && data.breaches.length > 0) {
                     playBreachAlarm();
+                    saveBreachFrame(dataUrl);
                     intrusionAlert.textContent = 'Intruder Detected';
                     intrusionAlert.classList.add('visible');
                     clearTimeout(window._intrusionAlertHide);

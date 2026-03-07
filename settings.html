@@ -50,58 +50,14 @@
             </div>
         </nav>
 
-        <!-- 2. Central Live Feed (Zone A) -->
+        <!-- 2. Saved Clips Gallery -->
         <main class="main-feed panel feed-glass">
-            <div class="video-container" id="video-container">
-                <video id="main-video" autoplay loop muted playsinline style="width: 100%; height: 100%; object-fit: cover; display: none;"></video>
-                <div class="video-overlay crt-subtle"></div>
-                <!-- Bounding Boxes -->
-                <div class="bounding-box red-box" style="top: 35%; left: 45%; width: 120px; height: 280px;">
-                    <span class="box-label tag-red">BOUNDARY APPROACH</span>
-                    <div class="corner tl"></div><div class="corner tr"></div>
-                    <div class="corner bl"></div><div class="corner br"></div>
-                </div>
-                <div class="bounding-box cyan-box" style="top: 50%; left: 20%; width: 50px; height: 110px;">
-                    <span class="box-label tag-cyan">HUMAN | CONF. 91%</span>
-                    <div class="corner tl"></div><div class="corner tr"></div>
-                    <div class="corner bl"></div><div class="corner br"></div>
-                </div>
-                <div class="bounding-box cyan-box" style="top: 52%; left: 70%; width: 45px; height: 100px;">
-                    <span class="box-label tag-cyan">HUMAN | CONF. 94%</span>
-                    <div class="corner tl"></div><div class="corner tr"></div>
-                    <div class="corner bl"></div><div class="corner br"></div>
-                </div>
-                <div class="bounding-box cyan-box" style="top: 48%; left: 82%; width: 40px; height: 95px;">
-                    <span class="box-label tag-cyan">HUMAN | CONF. 90%</span>
-                    <div class="corner tl"></div><div class="corner tr"></div>
-                    <div class="corner bl"></div><div class="corner br"></div>
-                </div>
+            <div class="saved-clips-header">
+                <h2 class="panel-title">Saved Clips</h2>
+                <span class="small-text cyan">Frames captured when alarms were triggered</span>
             </div>
-
-            <div class="feed-header">
-                <div class="feed-controls">
-                    <button class="flat-cyber-btn btn-primary" id="btn-webcam-on">[TURN ON WEBCAM]</button>
-                    <button class="flat-cyber-btn btn-danger" id="btn-webcam-off">[STOP WEBCAM]</button>
-                    <button class="flat-cyber-btn btn-secondary" id="btn-sample-video">[USE SAMPLE VIDEO]</button>
-                    <input type="file" id="video-upload" accept="video/*" style="display: none;">
-                </div>
-                <div class="rec-indicator blink">
-                    <span class="red-dot"></span> REC
-                </div>
-            </div>
-
-            <div class="feed-footer">
-                <div class="timeline-marker">
-                    <div class="timeline-bar">
-                        <div class="timeline-progress blink-fast"></div>
-                    </div>
-                    <span class="timeline-label">PERIMETER BOUNDARY</span>
-                </div>
-                <div class="feed-stats">
-                    <span class="stat-group cyan">[<span class="red">● REC</span>] [<span class="green">▶ PLAY</span>]</span>
-                    <span class="digital-clock" id="clock">14:02:45</span>
-                    <span class="stat-group cyan text-end">FPS: 30<br>STATUS: <span class="green">ONLINE</span></span>
-                </div>
+            <div id="saved-clips-grid" class="saved-clips-grid">
+                <div class="small-text cyan">Loading saved clips...</div>
             </div>
         </main>
 
