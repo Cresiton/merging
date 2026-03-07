@@ -467,6 +467,24 @@ body {
   text-align: center;
 }
 
+.saved-clip-delete {
+  margin: 2px auto 0 auto;
+  padding: 2px 8px;
+  font-family: var(--font-data);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  border-radius: 2px;
+  border: 1px solid rgba(255,75,75,0.8);
+  background: rgba(255,75,75,0.15);
+  color: #fff;
+  cursor: pointer;
+}
+
+.saved-clip-delete:hover {
+  background: rgba(255,75,75,0.4);
+  box-shadow: 0 0 6px rgba(255,75,75,0.8);
+}
+
 /* Custom Scrollbar */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: var(--bg-deep); }

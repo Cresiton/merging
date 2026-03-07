@@ -99,7 +99,15 @@ def save_clip():
     clips_dir = os.path.join(script_dir, "saved_clips")
     os.makedirs(clips_dir, exist_ok=True)
 
-    ts = payload.get("timestamp") or datetime.utcnow().strftime("%Y-%m-%d_%H-%M-%S")
+    clock_time = payload.get("clock_time")
+    if clock_time:
+        # Expecting clock_time like '14:25:33' from UI clock
+        clean_time = "".join(c for c in clock_time if c.isdigit() or c in (":", "-", "_"))
+        clean_time = clean_time.replace(":", "-")
+        date_str = datetime.utcnow().strftime("%Y-%m-%d")
+        ts = f"{date_str}_{clean_time}"
+    else:
+        ts = datetime.utcnow().strftime("%Y-%m-%d_%H-%M-%S")
     safe_ts = "".join(c for c in ts if c.isalnum() or c in ("-", "_"))
     filename = f"{safe_ts}.jpg"
     path = os.path.join(clips_dir, filename)
@@ -127,6 +135,35 @@ def list_saved_clips():
             if name.lower().endswith((".jpg", ".jpeg", ".png")):
                 clips.append(f"/saved_clips/{name}")
     return make_response(jsonify({"clips": clips}), 200)
+
+
+@app.route("/delete_clip", methods=["POST"])
+def delete_clip():
+    """
+    Delete a saved clip image.
+    Expects JSON: { "filename": "2026-03-07_14-25-33.jpg" }
+    """
+    payload = request.get_json(silent=True) or {}
+    name = payload.get("filename")
+    if not name:
+        return make_response(jsonify({"error": "Missing 'filename' field"}), 400)
+
+    # Prevent path traversal: keep only the base name
+    name = os.path.basename(name)
+
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    clips_dir = os.path.join(script_dir, "saved_clips")
+    path = os.path.join(clips_dir, name)
+
+    if not os.path.isfile(path):
+        return make_response(jsonify({"error": "File not found"}), 404)
+
+    try:
+        os.remove(path)
+    except Exception:
+        return make_response(jsonify({"error": "Failed to delete file"}), 500)
+
+    return make_response(jsonify({"status": "ok"}), 200)
 
 
 # Load model once at startup

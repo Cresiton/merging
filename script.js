@@ -251,6 +251,9 @@ function playBreachAlarm() {
 
 async function saveBreachFrame(imageDataUrl) {
     try {
+        const clockEl = document.getElementById('clock');
+        const clockTime = clockEl ? clockEl.textContent : null;
+
         await fetch('/save_clip', {
             method: 'POST',
             headers: {
@@ -259,6 +262,7 @@ async function saveBreachFrame(imageDataUrl) {
             body: JSON.stringify({
                 image: imageDataUrl,
                 session_id: sessionId,
+                clock_time: clockTime,
             }),
         });
     } catch (e) {
@@ -289,9 +293,36 @@ async function loadSavedClips(gridEl) {
             img.alt = 'Saved clip';
             const meta = document.createElement('div');
             meta.className = 'saved-clip-meta';
-            meta.textContent = url.split('/').pop();
+            const filename = url.split('/').pop();
+            meta.textContent = filename;
+
+            const delBtn = document.createElement('button');
+            delBtn.className = 'saved-clip-delete';
+            delBtn.textContent = 'Delete';
+            delBtn.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                try {
+                    const respDel = await fetch('/delete_clip', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ filename }),
+                    });
+                    if (respDel.ok) {
+                        item.remove();
+                        if (!gridEl.children.length) {
+                            gridEl.innerHTML = '<div class="small-text cyan">No saved clips yet.</div>';
+                        }
+                    } else {
+                        console.error('Delete failed with status', respDel.status);
+                    }
+                } catch (err) {
+                    console.error('Error deleting clip:', err);
+                }
+            });
+
             item.appendChild(img);
             item.appendChild(meta);
+            item.appendChild(delBtn);
             gridEl.appendChild(item);
         });
     } catch (e) {
