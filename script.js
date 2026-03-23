@@ -6,11 +6,50 @@ document.addEventListener('DOMContentLoaded', () => {
     const br = document.getElementById('btn-restricted-right');
     if (br) br.classList.add('active');
 
+    initSavedClipLightbox();
     const savedClipsGrid = document.getElementById('saved-clips-grid');
     if (savedClipsGrid) {
         loadSavedClips(savedClipsGrid);
     }
 });
+
+function initSavedClipLightbox() {
+    const lightbox = document.getElementById('saved-clip-lightbox');
+    const lightboxImg = document.getElementById('saved-clip-lightbox-img');
+    const closeBtn = lightbox?.querySelector('.saved-clip-lightbox-close');
+    if (!lightbox || !lightboxImg || !closeBtn) return;
+
+    const close = () => {
+        lightbox.hidden = true;
+        lightbox.setAttribute('aria-hidden', 'true');
+        lightboxImg.removeAttribute('src');
+        document.body.style.overflow = '';
+    };
+
+    const open = (src) => {
+        lightboxImg.src = src;
+        lightbox.hidden = false;
+        lightbox.setAttribute('aria-hidden', 'false');
+        document.body.style.overflow = 'hidden';
+        closeBtn.focus();
+    };
+
+    closeBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        close();
+    });
+
+    lightbox.addEventListener('click', (e) => {
+        if (e.target === lightbox) close();
+    });
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && !lightbox.hidden) close();
+    });
+
+    window.openSavedClipLightbox = open;
+    window.closeSavedClipLightbox = close;
+}
 
 // Live clock update
 function updateClock() {
@@ -291,6 +330,11 @@ async function loadSavedClips(gridEl) {
             img.src = url;
             img.className = 'saved-clip-thumb';
             img.alt = 'Saved clip';
+            img.addEventListener('click', () => {
+                if (typeof window.openSavedClipLightbox === 'function') {
+                    window.openSavedClipLightbox(url);
+                }
+            });
             const meta = document.createElement('div');
             meta.className = 'saved-clip-meta';
             const filename = url.split('/').pop();
